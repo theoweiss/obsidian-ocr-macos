@@ -7,7 +7,7 @@ node_modules/
 
 # Swift build
 swift-ocr/.build/
-ocr-cli
+/ocr-cli
 
 # IDE
 .idea/

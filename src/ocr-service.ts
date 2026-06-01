@@ -1,8 +1,9 @@
-import { exec } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
+import { access, constants } from "fs/promises";
 import * as path from "path";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export class OCRService {
   private cliPath: string;
@@ -48,9 +49,11 @@ export class OCRService {
 
   private async runOCR(imagePath: string): Promise<string> {
     try {
-      // Quote the paths to handle spaces and special characters
-      const { stdout, stderr } = await execAsync(
-        `"${this.cliPath}" "${imagePath}"`,
+      // Pass arguments as a separate argv array so no shell interpretation
+      // happens on the image path (filenames may contain ", `, $, \).
+      const { stdout, stderr } = await execFileAsync(
+        this.cliPath,
+        [imagePath],
         {
           timeout: 30000, // 30 second timeout
           maxBuffer: 1024 * 1024, // 1MB buffer for large text
@@ -80,7 +83,7 @@ export class OCRService {
    */
   async isAvailable(): Promise<boolean> {
     try {
-      await execAsync(`"${this.cliPath}" --version 2>&1 || echo "ok"`);
+      await access(this.cliPath, constants.X_OK);
       return true;
     } catch {
       return false;
